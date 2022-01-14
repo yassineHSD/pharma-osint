@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import sys
-
+from datetime import datetime
 negative=[]
 neutral=[]
 positive=[]
@@ -48,20 +48,17 @@ def adjust_inputs(qlist):
             if(2012+v==qlist[v]["Year"]):
                 break
             else:
-                print(2012+v)
                 tmp_qlist.insert(v,{'Year': 2012+v, 'upvoteCount': np.nan, 'count': np.nan})
             v=v+1
     for c in qlist:
         if((c["Year"]-1!=last_year) and (c["Year"]-1!=2011)):
             myaw=0
             for myaw in range(1,c["Year"]-last_year):
-                print(myaw+last_year)
                 tmp_qlist.insert(tmp,{'Year': myaw+last_year, 'upvoteCount': np.nan, 'count': np.nan})
             last_year=myaw+last_year
         else:
             last_year=c["Year"]
         tmp=tmp+1
-    print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
     return tmp_qlist
 
 def fetch_years(qual,sorted_comments):
@@ -121,8 +118,6 @@ def draw_charts(negative,neutral,positive):
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111)
 
-    #print(reddit_mau_years_mayer)
-    #print(ng_by_mau)
     ax2.plot(reddit_mau_years_mayer, ng_by_mau,label='Negative comments by 1000 MAU')
     ax2.plot(reddit_mau_years_mayer, neut_by_mau,label='neutral comments by 1000 MAU')
     ax2.plot(reddit_mau_years_mayer, pos_by_mau,label='positive comments by 1000 MAU')
@@ -136,8 +131,10 @@ def draw_charts(negative,neutral,positive):
     ax1.scatter(neut_years, reddit_mau_values_x,label='Reddit MAU (+48% avg est)')
     #plt.xticks(np.arange(2012, 2021, step=1))
     plt.legend(loc='upper left');
+    plt.draw()
+    fig.savefig('./charts/'+data_set.replace('/','-')+"-"+str(timestamp)+'.png', dpi=100)
+    fig2.savefig('./charts/'+data_set.replace('/','-')+"-"+str(timestamp)+'1.png', dpi=100)
     plt.show()
-
 def sort_comments(comments):
     for comment in comments:
         match = re.search(r'\d{4}-\d{2}-\d{2}', comment['dateModified'])
@@ -147,33 +144,38 @@ def sort_comments(comments):
 
     return sorted_comments
 def sort_qlist(qlist):
-    for entry in qlist:
-        print(entry["Year"])
     sorted_qlist = sorted(qlist, key=lambda x: x["Year"])
     return sorted_qlist
 
-with open(sys.argv[1],'r') as output_json:
-    comments = json.load(output_json)
-    #format date-time and sort the entries according to date-time
-    sorted_comments=sort_comments(comments)
-a,b=mayer_line()
-#reddit estimated values (droite de mayer)
-reddit_mau_values_mayer=[46,90,174,199,2016*a+b,250,330,430,2020*a+b,2021*a+b,2022*a+b]
-reddit_mau_years_mayer=[2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2021]
-negative=fetch_years("Negative",sorted_comments)
-positive=fetch_years("Positive",sorted_comments)
-neutral=fetch_years("Neutral",sorted_comments)
-print(negative)
-print(positive)
-print(neutral)
-
-negative=adjust_inputs(negative)
-neutral=adjust_inputs(neutral)
-positive=adjust_inputs(positive)
-print(negative)
-print(positive)
-print(neutral)
-negative=sort_qlist(negative)
-neutral=sort_qlist(neutral)
-positive=sort_qlist(positive)
-draw_charts(negative,neutral,positive)
+if(len(sys.argv)>1):
+    if(sys.argv[1]=="--help"):
+                print("Usage:")
+                print("\t python3 processor.py <dataset1> <dataset2> <dataset3> ....")
+                print("\t Options: --help : to show this message")
+    else:
+        data_sets=sys.argv[1:]
+        for data_set in data_sets:
+            now = datetime.now()
+            timestamp = datetime.timestamp(now)
+            with open(data_set,'r') as output_json:
+                comments = json.load(output_json)
+                #format date-time and sort the entries according to date-time
+                sorted_comments=sort_comments(comments)
+            a,b=mayer_line()
+            #reddit estimated values (droite de mayer)
+            reddit_mau_values_mayer=[46,90,174,199,2016*a+b,250,330,430,2020*a+b,2021*a+b,2022*a+b]
+            reddit_mau_years_mayer=[2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2021]
+            negative=fetch_years("Negative",sorted_comments)
+            positive=fetch_years("Positive",sorted_comments)
+            neutral=fetch_years("Neutral",sorted_comments)
+            negative=adjust_inputs(negative)
+            neutral=adjust_inputs(neutral)
+            positive=adjust_inputs(positive)
+            negative=sort_qlist(negative)
+            neutral=sort_qlist(neutral)
+            positive=sort_qlist(positive)
+            draw_charts(negative,neutral,positive)
+else:
+    print("Usage:")
+    print("\t python3 processor.py <dataset1> <dataset2> <dataset3> ....")
+    print("\t Options: --help : to show this message")

@@ -69,14 +69,12 @@ def more_results():
 if(len(sys.argv)>1):
     if(sys.argv[1]=="--help"):
         print("Usage:")
-        print("\t python3 processor.py <target1> <target2> <target3> ....")
+        print("\t python3 dumper.py <target1> <target2> <target3> ....")
         print("\t Options: --help : to show this message")
     else:
-
-
         search_targets=sys.argv[1:]
-        print(search_targets)
         for target in search_targets:
+            print("[+] Target: "+str(target))
             browser.get("https://duckduckgo.com/?q=site%3Areddit.com+AND+intitle%3A"+str(target)+"+AND+inurl%3Acomments+%22"+str(target)+"%22&t=h_&ia=web")
             while more_results():
                     element = browser.find_element_by_class_name('result--more__btn')
@@ -124,5 +122,5 @@ if(len(sys.argv)>1):
         print("[+] To process the data please run process.py <data-file.json>")
 else:
     print("Usage:")
-    print("\t python3 processor.py <target1> <target2> <target3> ....")
+    print("\t python3 dumper.py <target1> <target2> <target3> ....")
     print("\t Options: --help : to show this message")
