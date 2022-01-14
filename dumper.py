@@ -21,7 +21,7 @@ option = webdriver.ChromeOptions()
 option.binary_location = brave_path
 option.add_argument("--incognito")
 option.add_argument("--tor")
-#option.add_argument('--headless')
+option.add_argument('--headless')
 browser = webdriver.Chrome(executable_path=driver_path, chrome_options=option)
 action = webdriver.ActionChains(browser)
 
@@ -70,44 +70,50 @@ def more_results():
         return False
     return True
 
-browser.get("https://duckduckgo.com/?q=site%3Areddit.com+AND+intitle%3Anovartis+AND+inurl%3Acomments+%22novartis%22&t=h_&ia=web")
-while more_results():
-        element = browser.find_element_by_class_name('result--more__btn')
-        action.move_to_element(element)
-        action.perform()
-        element.click()
-        time.sleep(1)
-html_source = browser.page_source
-soup = BeautifulSoup(html_source,'lxml')
-count_result=0
-for a in soup.findAll('a', attrs={'class':'result__a'}):
-    count_result=count_result+1
-    url_list.append(a['href'])
-    f = open("url_list_log-"+str(timestamp)+".txt", "a")
-    f.write(a['href']+"\n")
-    f.close()
-print("[+] Results found: "+str(count_result))
-browser.close()
-myheader = {"User-Agent": "GoogleBot"}
-final_output=[]
-i=0
-for url in url_list:
-    i=i+1
-    print("[+]Fetching comments in reddit ("+str(i)+"/"+str(len(url_list))+"):"+str(url),end='\r',flush=True)
-    session = tor_session()
-    url=url.replace("//www.","//amp.")
-    r = session.get(url)
-    body=r.text
-    #sys.stdout.flush()
-    pattern_json = "\<script type\=\"application\/ld\+json\"\>(.*?)\<\/script\>"
+search_targets=sys.argv[1:]
+for target in search_targets:
+    browser.get("https://duckduckgo.com/?q=site%3Areddit.com+AND+intitle%3A"+str(target)+"+AND+inurl%3Acomments+%22"+str(target)+"%22&t=h_&ia=web")
+    while more_results():
+            element = browser.find_element_by_class_name('result--more__btn')
+            action.move_to_element(element)
+            action.perform()
+            element.click()
+            time.sleep(1)
+    html_source = browser.page_source
+    soup = BeautifulSoup(html_source,'lxml')
+    count_result=0
+    for a in soup.findAll('a', attrs={'class':'result__a'}):
+        count_result=count_result+1
+        url_list.append(a['href'])
+        f = open("./log/"+str(target)+"url_list-"+str(timestamp)+".txt", "a")
+        f.write(a['href']+"\n")
+        f.close()
+    print("[+] Results found: "+str(count_result))
+    browser.close()
+    myheader = {"User-Agent": "GoogleBot"}
+    final_output=[]
+    i=0
+    for url in url_list:
+        i=i+1
+        print("[+]Fetching comments in reddit ("+str(i)+"/"+str(len(url_list))+"):"+str(url),end='\r',flush=True)
+        session = tor_session()
+        url=url.replace("//www.","//amp.")
+        r = session.get(url)
+        body=r.text
+        #sys.stdout.flush()
+        pattern_json = "\<script type\=\"application\/ld\+json\"\>(.*?)\<\/script\>"
 
-    if re.search(pattern_json, body):
-        json_data = re.search(pattern_json, body).group()[35:-9]
+        if re.search(pattern_json, body):
+            json_data = re.search(pattern_json, body).group()[35:-9]
 
-    if "comment" in json.loads(json_data):
-        comments = json.loads(json_data)["comment"]
-        final_output=final_output+process_comments(comments)
-    else:
-        print("No comments found in this reddit/Can not load comments from this reddit " +url)
-with open('output-'+str(timestamp)+'.json', 'a') as jsondumpfile:
-    json.dump(final_output, jsondumpfile,indent=4)
+        if "comment" in json.loads(json_data):
+            comments = json.loads(json_data)["comment"]
+            final_output=final_output+process_comments(comments)
+        else:
+            print("No comments found in this reddit/Can not load comments from this reddit " +url)
+    with open('./log/'+str(target)+'-output-'+str(timestamp)+'.json', 'a') as jsondumpfile:
+        json.dump(final_output, jsondumpfile,indent=4)
+    print("\n",flush=True)
+    print("[+] Comments dumped to "+'output-'+str(timestamp)+'.json' )
+    print("[+] URLs dumped to "+'url_list-'+str(timestamp)+'.txt' )
+print("[+] To process the data please run process.py <data-file.json>")
