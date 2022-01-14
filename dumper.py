@@ -92,7 +92,6 @@ if(len(sys.argv)>1):
                 f.write(a['href']+"\n")
                 f.close()
             print("[+] Results found: "+str(count_result))
-            browser.close()
             myheader = {"User-Agent": "GoogleBot"}
             final_output=[]
             i=0
@@ -124,3 +123,4 @@ else:
     print("Usage:")
     print("\t python3 dumper.py <target1> <target2> <target3> ....")
     print("\t Options: --help : to show this message")
+browser.close()
