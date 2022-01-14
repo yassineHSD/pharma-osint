@@ -21,6 +21,7 @@ option = webdriver.ChromeOptions()
 option.binary_location = brave_path
 option.add_argument("--incognito")
 option.add_argument("--tor")
+#option.add_argument('--headless')
 browser = webdriver.Chrome(executable_path=driver_path, chrome_options=option)
 action = webdriver.ActionChains(browser)
 
@@ -89,13 +90,15 @@ print("[+] Results found: "+str(count_result))
 browser.close()
 myheader = {"User-Agent": "GoogleBot"}
 final_output=[]
+i=0
 for url in url_list:
-    sys.stdout.write("[+]Fetching comments in: {0} \r".format(url))
+    i=i+1
+    print("[+]Fetching comments in reddit ("+str(i)+"/"+str(len(url_list))+"):"+str(url),end='\r',flush=True)
     session = tor_session()
     url=url.replace("//www.","//amp.")
     r = session.get(url)
     body=r.text
-    sys.stdout.flush()
+    #sys.stdout.flush()
     pattern_json = "\<script type\=\"application\/ld\+json\"\>(.*?)\<\/script\>"
 
     if re.search(pattern_json, body):
@@ -105,6 +108,6 @@ for url in url_list:
         comments = json.loads(json_data)["comment"]
         final_output=final_output+process_comments(comments)
     else:
-        print("No comments found in this reddit/Can not load comments from this reddit")
+        print("No comments found in this reddit/Can not load comments from this reddit " +url)
 with open('output-'+str(timestamp)+'.json', 'a') as jsondumpfile:
     json.dump(final_output, jsondumpfile,indent=4)
