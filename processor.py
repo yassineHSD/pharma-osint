@@ -3,6 +3,7 @@ from datetime import datetime
 import re
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 negative=[]
 neutral=[]
 positive=[]
@@ -37,10 +38,22 @@ def mayer_line():
 
 def adjust_inputs(qlist):
     tmp=0
+    v=0
     tmp_qlist=qlist
     last_year=qlist[0]["Year"]-1
+    if(qlist[0]["Year"]>2012):
+        print("fill in the start")
+        for c in qlist:
+            if(2012+v==qlist[v]["Year"]):
+                break
+            else:
+                print(2012+v)
+                tmp_qlist.insert(v,{'Year': 2012+v, 'upvoteCount': np.nan, 'count': np.nan})
+            v=v+1
+    print("fill in the gaps")
     for c in qlist:
-        if(c["Year"]-1!=last_year):
+        if((c["Year"]-1!=last_year) and (c["Year"]-1!=2011)):
+            print(c["Year"]-1)
             tmp_qlist.insert(tmp,{'Year': c["Year"]-1, 'upvoteCount': np.nan, 'count': np.nan})
             last_year=c["Year"]-1
         else:
@@ -92,14 +105,18 @@ def draw_charts(negative,neutral,positive):
 
 
     #negative comments by 1000 MAU
+    print("################################")
+    print(pos_years)
+    print(ng_comments)
+    print(reddit_mau_values_mayer)
+    print(len(ng_comments))
+    print(len(reddit_mau_values_mayer))
     ng_by_mau = [i / j * 1000 for i, j in zip(ng_comments, reddit_mau_values_mayer)]
     #neutral comments by 1000 MAU
     neut_by_mau = [i / j * 1000 for i, j in zip(neut_comments, reddit_mau_values_mayer)]
     #positive comments by 1000 MAU
     pos_by_mau = [i / j * 1000 for i, j in zip(pos_comments, reddit_mau_values_mayer)]
-    print(ng_by_mau)
-    print(ng_years)
-    print(reddit_mau_values_mayer)
+
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
@@ -128,11 +145,10 @@ def sort_comments(comments):
         date = datetime.strptime(match.group(), '%Y-%m-%d').date()
         comment['dateModified']=date
     sorted_comments = sorted(comments, key=lambda x: x['dateModified'])
-    print(sorted_comments[1]['dateModified'])
-    print(sorted_comments[len(sorted_comments)-1]['dateModified'])
+
     return sorted_comments
 
-with open('output.json','r') as output_json:
+with open('output-1642163117.02487.json','r') as output_json:
     comments = json.load(output_json)
     #format date-time and sort the entries according to date-time
     sorted_comments=sort_comments(comments)
@@ -150,4 +166,7 @@ print(neutral)
 negative=adjust_inputs(negative)
 neutral=adjust_inputs(neutral)
 positive=adjust_inputs(positive)
+print(negative)
+print(positive)
+print(neutral)
 draw_charts(negative,neutral,positive)

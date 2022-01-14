@@ -7,10 +7,25 @@ import re
 import json
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from datetime import datetime
+import sys
+
+nltk.download('vader_lexicon')
 
 url_list=[]
 
-nltk.download('vader_lexicon')
+driver_path = "/usr/local/bin/chromedriver"
+brave_path = "/usr/bin/brave-browser"
+
+option = webdriver.ChromeOptions()
+option.binary_location = brave_path
+option.add_argument("--incognito")
+option.add_argument("--tor")
+browser = webdriver.Chrome(executable_path=driver_path, chrome_options=option)
+action = webdriver.ActionChains(browser)
+
+now = datetime.now()
+timestamp = datetime.timestamp(now)
 
 def tor_session():
     session = requests.session()
@@ -33,10 +48,6 @@ def process_comments(comments):
             sid = SentimentIntensityAnalyzer()
             ss = sid.polarity_scores(comment["text"])
             Qualification=qualify(comment["text"],ss)
-            print(comment["dateModified"])
-            print(comment["text"])
-            print(Qualification)
-            print("_____________________________")
             row={
             "Comment":comment["text"],
             "dateModified":comment["dateModified"],
@@ -51,18 +62,6 @@ def process_comments(comments):
             continue
     return processed_data
 
-driver_path = "/usr/local/bin/chromedriver"
-brave_path = "/usr/bin/brave-browser"
-
-option = webdriver.ChromeOptions()
-option.binary_location = brave_path
-option.add_argument("--incognito")
-option.add_argument("--tor")
-
-browser = webdriver.Chrome(executable_path=driver_path, chrome_options=option)
-
-
-action = webdriver.ActionChains(browser)
 def more_results():
     try:
         browser.find_element_by_class_name('result--more__btn')
@@ -70,7 +69,7 @@ def more_results():
         return False
     return True
 
-browser.get("https://duckduckgo.com/?q=site%3Areddit.com+AND+intitle%3ANovartis+AND+inurl%3Acomments&t=h_&ia=web")
+browser.get("https://duckduckgo.com/?q=site%3Areddit.com+AND+intitle%3Anovartis+AND+inurl%3Acomments+%22novartis%22&t=h_&ia=web")
 while more_results():
         element = browser.find_element_by_class_name('result--more__btn')
         action.move_to_element(element)
@@ -79,23 +78,24 @@ while more_results():
         time.sleep(1)
 html_source = browser.page_source
 soup = BeautifulSoup(html_source,'lxml')
-
+count_result=0
 for a in soup.findAll('a', attrs={'class':'result__a'}):
+    count_result=count_result+1
     url_list.append(a['href'])
-f = open("url_list.txt", "w")
-f.write(str(url_list))
-f.close()
-
+    f = open("url_list_log-"+str(timestamp)+".txt", "a")
+    f.write(a['href']+"\n")
+    f.close()
+print("[+] Results found: "+str(count_result))
+browser.close()
 myheader = {"User-Agent": "GoogleBot"}
-
 final_output=[]
 for url in url_list:
-    print(url)
+    sys.stdout.write("[+]Fetching comments in: {0} \r".format(url))
     session = tor_session()
     url=url.replace("//www.","//amp.")
     r = session.get(url)
     body=r.text
-
+    sys.stdout.flush()
     pattern_json = "\<script type\=\"application\/ld\+json\"\>(.*?)\<\/script\>"
 
     if re.search(pattern_json, body):
@@ -106,5 +106,5 @@ for url in url_list:
         final_output=final_output+process_comments(comments)
     else:
         print("No comments found in this reddit/Can not load comments from this reddit")
-with open('output.json', 'a') as jsondumpfile:
+with open('output-'+str(timestamp)+'.json', 'a') as jsondumpfile:
     json.dump(final_output, jsondumpfile,indent=4)
