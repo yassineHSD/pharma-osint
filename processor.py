@@ -99,6 +99,11 @@ def draw_charts(negative,neutral,positive):
     neut_years = [item['Year'] for item in neutral]
     neut_comments = [item['count'] for item in neutral]
 
+    neg_upvotes = [item['upvoteCount'] for item in negative]
+    neut_upvotes = [item['upvoteCount'] for item in neutral]
+    pos_upvotes = [item['upvoteCount'] for item in positive]
+
+
     #finding 2 extreme point on the mayer line
     x_values = [neut_years[0], neut_years[len(neut_years)-1]]
     y_values = [neut_years[0]*a+b, neut_years[len(neut_years)-1]*a+b]
@@ -111,17 +116,18 @@ def draw_charts(negative,neutral,positive):
     #positive comments by 1000 MAU
     pos_by_mau = [i / j * 1000 for i, j in zip(pos_comments, reddit_mau_values_mayer)]
 
+    ng_upv_by_mau = [i / j * 1000 for i, j in zip(neg_upvotes, reddit_mau_values_mayer)]
+    neut_upv_by_mau = [i / j * 1000 for i, j in zip(neut_upvotes, reddit_mau_values_mayer)]
+    pos_upv_by_mau = [i / j * 1000 for i, j in zip(pos_upvotes, reddit_mau_values_mayer)]
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
 
-    fig2 = plt.figure()
-    ax2 = fig2.add_subplot(111)
 
-    ax2.plot(reddit_mau_years_mayer, ng_by_mau,label='Negative comments by 1000 MAU')
-    ax2.plot(reddit_mau_years_mayer, neut_by_mau,label='neutral comments by 1000 MAU')
-    ax2.plot(reddit_mau_years_mayer, pos_by_mau,label='positive comments by 1000 MAU')
-    ax2.axvline(x=2019.5, color='black', linestyle='dashed',label='COVID-19 happened',linewidth=1)
+
+    fig = plt.figure(figsize=(10,10))
+    ax1 = fig.add_subplot(221)
+    ax3 = fig.add_subplot(222)
+    ax4 = fig.add_subplot(223)
+    ax2 = fig.add_subplot(224)
 
     ax1.plot(x_values, y_values,label='Reddit MAU (Mayer est)')
     ax1.plot(ng_years, ng_comments,label='Negative comments count')
@@ -129,12 +135,35 @@ def draw_charts(negative,neutral,positive):
     ax1.plot(neut_years, neut_comments,label='Positive comments count')
     ax1.plot(neut_years, reddit_mau_values,label='Reddit MAU')
     ax1.scatter(neut_years, reddit_mau_values_x,label='Reddit MAU (+48% avg est)')
+    ax1.axvline(x=2019.5, color='black', linestyle='dashed',label='COVID-19 happened',linewidth=1)
     #plt.xticks(np.arange(2012, 2021, step=1))
-    plt.legend(loc='upper left');
+    ax1.legend(loc='upper left')
+
+
+    ax2.plot(reddit_mau_years_mayer, ng_by_mau,label='Negative upvotes by 1000 MAU')
+    ax2.plot(reddit_mau_years_mayer, neut_by_mau,label='Neutral upvotes by 1000 MAU')
+    ax2.plot(reddit_mau_years_mayer, pos_by_mau,label='Positive upvotes by 1000 MAU')
+    ax2.axvline(x=2019.5, color='black', linestyle='dashed',label='COVID-19 happened',linewidth=1)
+
+    ax2.legend(loc='upper left')
+    ax3.plot(ng_years, neg_upvotes,label='Negative upvotes')
+    ax3.plot(neut_years, neut_upvotes,label='Negative upvotes')
+    ax3.plot(pos_years, pos_upvotes,label='Negative upvotes')
+
+    ax3.legend(loc='upper left');
+
+    ax4.plot(reddit_mau_years_mayer, ng_upv_by_mau,label='Negative comments by 1000 MAU')
+    ax4.plot(reddit_mau_years_mayer, neut_upv_by_mau,label='Neutral comments by 1000 MAU')
+    ax4.plot(reddit_mau_years_mayer, pos_upv_by_mau,label='Positive comments by 1000 MAU')
+    ax4.axvline(x=2019.5, color='black', linestyle='dashed',label='COVID-19 outbreak',linewidth=1)
+
+    ax4.legend(loc='upper left');
+
     plt.draw()
-    fig.savefig('./charts/'+data_set.replace('/','-')+"-"+str(timestamp)+'.png', dpi=100)
-    fig2.savefig('./charts/'+data_set.replace('/','-')+"-"+str(timestamp)+'1.png', dpi=100)
+    fig.savefig('./charts/'+data_set.replace('/','-')+"-"+str(timestamp)+'.png', dpi=300)
+    print("[+] Charts saved to: ./charts/"+data_set.replace('/','-')+"-"+str(timestamp)+".png")
     plt.show()
+
 def sort_comments(comments):
     for comment in comments:
         match = re.search(r'\d{4}-\d{2}-\d{2}', comment['dateModified'])
