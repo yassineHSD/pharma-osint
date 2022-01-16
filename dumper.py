@@ -88,7 +88,7 @@ if(len(sys.argv)>1):
             for a in soup.findAll('a', attrs={'class':'result__a'}):
                 count_result=count_result+1
                 url_list.append(a['href'])
-                f = open("./log/"+str(target)+"url_list-"+str(timestamp)+".txt", "a")
+                f = open("./log/"+str(target)+"-url_list-"+str(timestamp)+".txt", "a")
                 f.write(a['href']+"\n")
                 f.close()
             print("[+] Results found: "+str(count_result))
@@ -116,8 +116,8 @@ if(len(sys.argv)>1):
             with open('./log/'+str(target)+'-output-'+str(timestamp)+'.json', 'a') as jsondumpfile:
                 json.dump(final_output, jsondumpfile,indent=4)
             print("\n",flush=True)
-            print("[+] Comments dumped to "+'output-'+str(timestamp)+'.json' )
-            print("[+] URLs dumped to "+'url_list-'+str(timestamp)+'.txt' )
+            print("[+] Comments dumped to "+str(target)+'-output-'+str(timestamp)+'.json' )
+            print("[+] URLs dumped to "+str(target)+'-url_list-'+str(timestamp)+'.txt' )
         print("[+] To process the data please run process.py <data-file.json>")
 else:
     print("Usage:")
